@@ -1,0 +1,47 @@
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:323.0.0-alpine
+    id: Secret setup
+    entrypoint: "/bin/bash"
+    args:
+      - -c
+      - |
+        gcloud secrets versions access latest --secret=slack-finservbot | python3 -c "import sys, json; print(json.load(sys.stdin)['bot_user_oauth_access_token'])" > /workspace/bot_token
+        gcloud secrets versions access latest --secret=slack-finservbot | python3 -c "import sys, json; print(json.load(sys.stdin)['slack_webhook_token_finserv_alert_cicd'])" > /workspace/slack_url
+  - name: 'gcr.io/$PROJECT_ID/slackbot:v0.2'
+    id: Slackbot init
+    entrypoint: "/bin/sh"
+    args:
+      - -c
+      - |
+        TOKEN=$( cat /workspace/bot_token )
+        /app/main --build $BUILD_ID --project "Testing slackbot" --copy-timeout --channel "finserv-alert-common-stg" --token $$TOKEN --auth token --env dev
+        # /app/main --build $BUILD_ID --webhook "https://hooks.slack.com/services/$(cat /workspace/slack_url)" --project "Testing slackbot" --copy-timeout --auth webhook
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:323.0.0-slim
+    id: First echo
+    entrypoint: "/bin/bash"
+    args:
+      - -c
+      - |
+        echo "This is step 1"
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:323.0.0-alpine
+    entrypoint: "/bin/bash"
+    id: Second echo
+    args:
+      - -c
+      - |
+        echo "This is step 2"
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:323.0.0-alpine
+    entrypoint: "/bin/bash"
+    id: Failing echo
+    args:
+      - -c
+      - |
+        echo "This is step 3 that will fail"
+        exit 1
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: "/bin/bash"
+    id: Last echo
+    args:
+      - -c
+      - |
+        echo "This is step 4, but we'll never get here"
