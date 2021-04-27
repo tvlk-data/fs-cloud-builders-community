@@ -4,23 +4,27 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 	"strings"
+	"time"
 
 	cloudbuild "google.golang.org/api/cloudbuild/v1"
 )
 
 // Trigger starts an independent watcher build.
-func Trigger(ctx context.Context, projectId string, buildId string, webhook string, project string, copyName bool, copyTags bool, copyTimeout bool) {
+func Trigger(ctx context.Context, projectId string, buildId string, webhook string, project string, auth string, channel string, env string, token string, copyName bool, copyTags bool, copyTimeout bool) {
 	svc := gcbClient(ctx)
 	watcherBuild := &cloudbuild.Build{
 		Steps: []*cloudbuild.BuildStep{
 			&cloudbuild.BuildStep{
-				Name: "gcr.io/$PROJECT_ID/slackbot",
+				Name: "gcr.io/$PROJECT_ID/slackbot:v0.2",
 				Args: []string{
 					fmt.Sprintf("--build=%s", buildId),
 					fmt.Sprintf("--webhook=%s", webhook),
 					fmt.Sprintf("--project=%s", project),
+					fmt.Sprintf("--auth=%s", auth),
+					fmt.Sprintf("--channel=%s", channel),
+					fmt.Sprintf("--env=%s", env),
+					fmt.Sprintf("--token=%s", token),
 					"--mode=monitor",
 				},
 			},

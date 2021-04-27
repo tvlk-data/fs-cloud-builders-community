@@ -1,6 +1,13 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/slackbot', '.' ]
-images:
-- 'gcr.io/$PROJECT_ID/slackbot'
-tags: ['cloud-builders-community']
+  entrypoint: "/bin/bash"
+  args: 
+    - -c
+    - 'docker build 
+          -t gcr.io/$PROJECT_ID/slackbot:v0.2 .'
+- name: 'gcr.io/cloud-builders/docker'
+  entrypoint: "/bin/bash"
+  args: 
+    - -c
+    - |
+      docker push gcr.io/$PROJECT_ID/slackbot:v0.2
